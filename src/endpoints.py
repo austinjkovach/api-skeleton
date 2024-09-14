@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from http import HTTPStatus
 from src.extensions import db
-from src.models import DummyModel
+from src.models import DummyModel, Doctor
 from webargs import fields
 from webargs.flaskparser import use_args
 
@@ -38,24 +38,11 @@ def dummy_model_create(args):
     return new_record.json()
 
 # Data models
-class Doctor:
-    def __init__(self, name, start_hour, end_hour):
-        self.name = name
-        self.start_hour = start_hour
-        self.end_hour = end_hour
-
 class Appointment:
     def __init__(self, doctor, start_time, end_time):
         self.doctor = doctor
         self.start_time = start_time
         self.end_time = end_time
-
-# Define doctors and their working hours
-doctors = {
-    "Strange": Doctor("Strange", 9, 17),
-    "Who": Doctor("Who", 8, 16)
-}
-
 
 # Helper function to create appointments
 def create_seed_appointment(doctor_name, start_time_str, duration_minutes):
@@ -125,7 +112,7 @@ def create_appointment(args):
     duration_minutes = args.get("durationMinutes")
 
     # Validate doctor
-    doctor = doctors.get(doctor_name)
+    doctor = Doctor.query.filter_by(name=doctor_name).first()
     if not doctor:
         return jsonify({"error": "Invalid doctor name"}), 400
 
@@ -155,7 +142,7 @@ def get_appointments():
     start_time = datetime.fromisoformat(request.args.get("startTime"))
     end_time = datetime.fromisoformat(request.args.get("endTime"))
 
-    doctor = doctors.get(doctor_name)
+    doctor = Doctor.query.filter_by(name=doctor_name).first()
     if not doctor:
         return jsonify({"error": "Invalid doctor name"}), 400
 
@@ -182,7 +169,7 @@ def get_first_available():
     doctor_name = request.args.get("doctorName")
     after_time = datetime.fromisoformat(request.args.get("afterTime"))
 
-    doctor = doctors.get(doctor_name)
+    doctor = Doctor.query.filter_by(name=doctor_name).first()
     if not doctor:
         return jsonify({"error": "Invalid doctor name"}), 400
 

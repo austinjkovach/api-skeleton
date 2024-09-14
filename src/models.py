@@ -1,7 +1,6 @@
 from src.extensions import db
 from flask import jsonify
 
-
 class DummyModel(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     value = db.Column(db.String, nullable=False)
@@ -28,19 +27,6 @@ class Doctor(db.Model):
             'start_hour': self.start_hour,
             'end_hour': self.end_hour
         })
-
-# class Doctor:
-#     def __init__(self, name, start_hour, end_hour):
-#         self.name = name
-#         self.start_hour = start_hour
-#         self.end_hour = end_hour
-
-# class Appointment:
-#     def __init__(self, doctor, start_time, end_time):
-#         self.doctor = doctor
-#         self.start_time = start_time
-#         self.end_time = end_time
-
 
 class Appointment(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)

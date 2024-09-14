@@ -4,6 +4,12 @@ from src.models import Doctor
 
 def seed_database(app, db):
   with app.app_context():
+    seed_doctors(db)
+
+def seed_appointments(db):
+  return None
+
+def seed_doctors(db):
       # Create Doctor instances
       strange = Doctor(name="Strange", start_hour=9, end_hour=17)
       who = Doctor(name="Who", start_hour=8, end_hour=16)
@@ -17,12 +23,15 @@ def seed_database(app, db):
 
       # Verify by querying
       doctors = Doctor.query.all()
-      print('Seeded %s Doctors:' % len(doctors))
+      print('Seeding Doctors...')
 
       for doctor in doctors:
           fstart = format_12hr(doctor.start_hour)
           fend = format_12hr(doctor.end_hour)
-          print('Doctor %s | %s-%s M-F' % (doctor.name, fstart, fend))  # Prints out the JSON representation of each doctor
+          print('\tDoctor %s | %s-%s M-F' % (doctor.name, fstart, fend))
+
+      print('Seeded %s Doctors:' % len(doctors))
+      print('\n\n')
 
 def format_12hr(hour):
     return datetime.strptime(f"{hour}:00", "%H:%M").strftime("%I:%M%p")
