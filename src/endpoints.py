@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from http import HTTPStatus
 from src.extensions import db
-from src.models import DummyModel, DoctorModel
+from src.models import DummyModel, DoctorModel, AppointmentModel
 from webargs import fields
 from webargs.flaskparser import use_args
 
@@ -36,33 +36,6 @@ def dummy_model_create(args):
     db.session.add(new_record)
     db.session.commit()
     return new_record.json()
-
-# Data models
-class Appointment:
-    def __init__(self, doctor, start_time, end_time):
-        self.doctor = doctor
-        self.start_time = start_time
-        self.end_time = end_time
-
-# Helper function to create appointments
-def create_seed_appointment(doctor_name, start_time_str, duration_minutes):
-    start_time = datetime.fromisoformat(start_time_str)
-    end_time = start_time + timedelta(minutes=duration_minutes)
-    return Appointment(doctor_name, start_time, end_time)
-
-# Seed data
-# In-memory list of appointments
-appointments = [
-    create_seed_appointment("Strange", "2024-09-16T09:00:00", 30),
-    create_seed_appointment("Strange", "2024-09-16T10:00:00", 45),
-    create_seed_appointment("Strange", "2024-09-16T11:00:00", 60),
-    create_seed_appointment("Who", "2024-09-16T08:00:00", 30),
-    create_seed_appointment("Who", "2024-09-16T09:00:00", 30),
-    create_seed_appointment("Who", "2024-09-16T10:00:00", 45),
-    create_seed_appointment("Strange", "2024-09-17T14:00:00", 30),
-    create_seed_appointment("Who", "2024-09-17T13:00:00", 60),
-]
-
 
 # Helper functions
 def is_within_working_hours(doctor, start_time, end_time):

@@ -13,6 +13,6 @@ def create_app():
     # restart wipes the db clean, but does have the advantage of not having to worry about schema migrations.
     with app.app_context():
         db.create_all()
-        seed_database(app, db)
+        seed_database(app)
     app.register_blueprint(home)
     return app
