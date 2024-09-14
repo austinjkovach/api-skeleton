@@ -11,14 +11,15 @@ class DummyModel(db.Model):
         """
         return jsonify({'id': self.id, 'value': self.value})
 
-class Doctor(db.Model):
+class DoctorModel(db.Model):
+    __tablename__ = 'doctor'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(50), unique=True, nullable=False)
     start_hour = db.Column(db.Integer, nullable=False)
     end_hour = db.Column(db.Integer, nullable=False)
 
     def __repr__(self):
-        return f'<Doctor {self.name}>'
+        return f'<DoctorModel {self.name}>'
 
     def json(self):
         return jsonify({
@@ -29,12 +30,13 @@ class Doctor(db.Model):
         })
 
 class Appointment(db.Model):
+    __tablename__ = 'appointments'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    doctor_name = db.Column(db.String, db.ForeignKey('doctor.name'), nullable=False)
+    doctor_id = db.Column(db.String, db.ForeignKey('doctor.name'), nullable=False)
     start_time = db.Column(db.DateTime, nullable=False)
     end_time = db.Column(db.DateTime, nullable=False)
 
-    doctor = db.relationship('Doctor', backref=db.backref('appointments', lazy=True))
+    doctor = db.relationship('DoctorModel', backref=db.backref('appointments', lazy=True))
 
     def __repr__(self):
         return f'<Appointment {self.doctor.name} from {self.start_time} to {self.end_time}>'
@@ -42,7 +44,7 @@ class Appointment(db.Model):
     def json(self):
         return {
             'id': self.id,
-            'doctor_name': self.doctor_name,
+            'doctor_id': self.doctor_id,
             'start_time': self.start_time.isoformat(),
             'end_time': self.end_time.isoformat()
         }

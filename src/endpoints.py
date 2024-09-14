@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from http import HTTPStatus
 from src.extensions import db
-from src.models import DummyModel, Doctor
+from src.models import DummyModel, DoctorModel
 from webargs import fields
 from webargs.flaskparser import use_args
 
@@ -83,7 +83,7 @@ def has_conflict(doctor_name, start_time, end_time):
             (end_time > appt.start_time and end_time <= appt.end_time) or
             (start_time <= appt.start_time and end_time >= appt.end_time)
         )
-        for appt in appointments
+        for appt in doctor.appointments
     )
 
 def get_first_available_appointment(doctor, after_time):
@@ -112,7 +112,7 @@ def create_appointment(args):
     duration_minutes = args.get("durationMinutes")
 
     # Validate doctor
-    doctor = Doctor.query.filter_by(name=doctor_name).first()
+    doctor = DoctorModel.query.filter_by(name=doctor_name).first()
     if not doctor:
         return jsonify({"error": "Invalid doctor name"}), 400
 
@@ -142,7 +142,7 @@ def get_appointments():
     start_time = datetime.fromisoformat(request.args.get("startTime"))
     end_time = datetime.fromisoformat(request.args.get("endTime"))
 
-    doctor = Doctor.query.filter_by(name=doctor_name).first()
+    doctor = DoctorModel.query.filter_by(name=doctor_name).first()
     if not doctor:
         return jsonify({"error": "Invalid doctor name"}), 400
 
@@ -169,7 +169,7 @@ def get_first_available():
     doctor_name = request.args.get("doctorName")
     after_time = datetime.fromisoformat(request.args.get("afterTime"))
 
-    doctor = Doctor.query.filter_by(name=doctor_name).first()
+    doctor = DoctorModel.query.filter_by(name=doctor_name).first()
     if not doctor:
         return jsonify({"error": "Invalid doctor name"}), 400
 

@@ -1,6 +1,6 @@
 # from src.extensions import db
 from datetime import datetime
-from src.models import Doctor
+from src.models import DoctorModel
 
 def seed_database(app, db):
   with app.app_context():
@@ -11,8 +11,8 @@ def seed_appointments(db):
 
 def seed_doctors(db):
       # Create Doctor instances
-      strange = Doctor(name="Strange", start_hour=9, end_hour=17)
-      who = Doctor(name="Who", start_hour=8, end_hour=16)
+      strange = DoctorModel(name="Strange", start_hour=9, end_hour=17)
+      who = DoctorModel(name="Who", start_hour=8, end_hour=16)
 
       # Add to the session
       db.session.add(strange)
@@ -22,7 +22,7 @@ def seed_doctors(db):
       db.session.commit()
 
       # Verify by querying
-      doctors = Doctor.query.all()
+      doctors = DoctorModel.query.all()
       print('Seeding Doctors...')
 
       for doctor in doctors:
