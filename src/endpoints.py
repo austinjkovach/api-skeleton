@@ -49,9 +49,9 @@ def is_within_working_hours(doctor, start_time, end_time):
         start_hour >= doctor.start_hour and end_hour <= doctor.end_hour
     )
 
-def has_conflict(doctor_name, start_time, end_time):
+def has_conflict(doctor, start_time, end_time):
     return any(
-        appt.doctor == doctor_name and (
+        appt.doctor == doctor.name and (
             (start_time >= appt.start_time and start_time < appt.end_time) or
             (end_time > appt.start_time and end_time <= appt.end_time) or
             (start_time <= appt.start_time and end_time >= appt.end_time)
@@ -71,7 +71,7 @@ def get_first_available_appointment(doctor, after_time):
             potential_start = current_time.replace(hour=hour, minute=0)
             potential_end = potential_start + timedelta(minutes=60)
 
-            if not has_conflict(doctor.name, potential_start, potential_end) and is_within_working_hours(doctor, potential_start, potential_end):
+            if not has_conflict(doctor, potential_start, potential_end) and is_within_working_hours(doctor, potential_start, potential_end):
                 return potential_start
 
     return None
@@ -95,12 +95,13 @@ def create_appointment(args):
     # Check working hours and conflicts
     if not is_within_working_hours(doctor, start_time, end_time):
         return jsonify({"error": "Appointment outside working hours"}), 400
-    if has_conflict(doctor_name, start_time, end_time):
+    if has_conflict(doctor, start_time, end_time):
         return jsonify({"error": "Appointment conflicts with an existing one"}), 409
 
     # Create and store appointment
-    appointment = Appointment(doctor_name, start_time, end_time)
-    appointments.append(appointment)
+    appointment = AppointmentModel(doctor_id=doctor.id, start_time=start_time, end_time=end_time)
+    db.session.add(appointment)
+    db.session.commit()
 
     return jsonify({
         "doctor": doctor_name,
