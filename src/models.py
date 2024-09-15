@@ -39,7 +39,6 @@ class AppointmentModel(db.Model):
     doctor = db.relationship('DoctorModel', backref=db.backref('appointments', lazy=True))
 
     def __repr__(self):
-        print('DOC', self.doctor)
         if not self.doctor:
           return f'<Appointment {self.doctor_id} from {self.start_time} to {self.end_time}>'
         else:
