@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from http import HTTPStatus
 from src.extensions import db
 from src.models import DummyModel, DoctorModel, AppointmentModel
-from src.helpers import is_within_working_hours, has_conflict, get_first_available_appointment
+from src.helpers import is_within_working_hours, has_conflict, get_next_available_appointment
 from src.constants import MAX_APPOINTMENT_DURATION_MINUTES
 
 from webargs import fields
@@ -88,8 +88,8 @@ def get_appointments():
 
     return jsonify([appt.json() for appt in doctor_appointments])
 
-@home.route('/appointments/first-available', methods=['GET'])
-def get_first_available():
+@home.route('/appointments/next-available', methods=['GET'])
+def get_next_available():
     doctor_id = request.args.get("doctor_id")
     after_time = datetime.fromisoformat(request.args.get("after"))
     duration_minutes = int(request.args.get("duration_minutes"))
@@ -101,13 +101,13 @@ def get_first_available():
     if not doctor:
         return jsonify({"error": "Invalid doctor id"}), 400
 
-    first_available = get_first_available_appointment(doctor, after_time, duration_minutes)
-    if first_available:
+    next_available = get_next_available_appointment(doctor, after_time, duration_minutes)
+    if next_available:
         # return jsonify({"": "Appointment conflicts with an existing one"})
 
         return jsonify({
-          'start_time': first_available.start_time.isoformat(),
-          'end_time': first_available.end_time.isoformat(),
+          'start_time': next_available.start_time.isoformat(),
+          'end_time': next_available.end_time.isoformat(),
           'doctor': {
             'id': doctor.id,
             'name': doctor.name

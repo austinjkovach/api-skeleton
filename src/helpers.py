@@ -26,7 +26,7 @@ def has_conflict(doctor, start_time, end_time):
         for appt in doctor.appointments
     )
 
-def get_first_available_appointment(doctor, after_time, duration_minutes):
+def get_next_available_appointment(doctor, after_time, duration_minutes):
     if duration_minutes > MAX_APPOINTMENT_DURATION_MINUTES:
       return None
     current_time = after_time.replace(second=0, microsecond=0)
