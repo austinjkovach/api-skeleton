@@ -83,7 +83,8 @@ def get_appointments():
         AppointmentModel.doctor_id == doctor.id,
         AppointmentModel.start_time >= start_time,
         AppointmentModel.end_time <= end_time
-    ).all()
+    ).order_by(AppointmentModel.start_time).all()
+
 
     return jsonify([appt.json() for appt in doctor_appointments])
 

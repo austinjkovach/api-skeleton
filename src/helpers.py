@@ -69,7 +69,7 @@ def get_first_available_appointment(doctor, after_time, duration_minutes):
       # If next appointment start time is after our end time
       # (aka does not conflict), we can return the potential appointment.
       # Otherwise, the earliest we could schedule is the end of the next appointment
-      if appointment.end_time < potential_start:
+      if appointment.start_time >= potential_end:
         return AppointmentModel(start_time=potential_start, end_time=potential_end, doctor_id=doctor.id)
       else:
         potential_start = appointment.end_time
@@ -88,8 +88,6 @@ def get_first_available_appointment(doctor, after_time, duration_minutes):
 
     # If we would end after closing, skip forward to opening of the next day
     end_hour = potential_start.replace(hour=doctor.end_hour, minute=0)
-    print('ajk potential end', potential_end)
-    print('ajk end_hour', end_hour)
     if potential_end >= end_hour:
         potential_start = potential_start + timedelta(days=1)
         potential_start = potential_start.replace(hour=doctor.start_hour, minute=0)
