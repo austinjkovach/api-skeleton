@@ -18,6 +18,8 @@ class DoctorModel(db.Model):
     start_hour = db.Column(db.Integer, nullable=False)
     end_hour = db.Column(db.Integer, nullable=False)
 
+    appointments = db.relationship('AppointmentModel', back_populates="doctor")
+
     def __repr__(self):
         return f'<DoctorModel {self.name}>'
 
@@ -36,7 +38,7 @@ class AppointmentModel(db.Model):
     start_time = db.Column(db.DateTime, nullable=False)
     end_time = db.Column(db.DateTime, nullable=False)
 
-    doctor = db.relationship('DoctorModel', backref=db.backref('appointments', lazy=True))
+    doctor = db.relationship('DoctorModel', back_populates='appointments')
 
     def __repr__(self):
         if not self.doctor:
@@ -44,10 +46,14 @@ class AppointmentModel(db.Model):
         else:
           return f'<Appointment {self.doctor.name} from {self.start_time} to {self.end_time}>'
 
+
     def json(self):
         return {
             'id': self.id,
-            'doctor_id': self.doctor_id,
             'start_time': self.start_time.isoformat(),
-            'end_time': self.end_time.isoformat()
+            'end_time': self.end_time.isoformat(),
+            'doctor': {
+              'id': self.doctor.id,
+              'name': self.doctor.name
+            }
         }

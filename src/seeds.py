@@ -1,5 +1,6 @@
 # from src.extensions import db
 from datetime import datetime, timedelta
+from src.helpers import format_12hr
 from src.models import DoctorModel, AppointmentModel
 from src.extensions import db
 
@@ -27,11 +28,8 @@ def seed_doctors():
           fend = format_12hr(doctor.end_hour)
           print('\tDoctor %s | %s-%s M-F' % (doctor.name, fstart, fend))
 
-      print('Seeded %s Doctors:' % len(doctors))
-      print('\n\n')
-
-def format_12hr(hour):
-    return datetime.strptime(f"{hour}:00", "%H:%M").strftime("%I:%M%p")
+      print('Seeded %s Doctors' % len(doctors))
+      print('\n')
 
 def create_seed_appointment(appt):
 
@@ -40,9 +38,11 @@ def create_seed_appointment(appt):
 
     appointment = AppointmentModel(doctor_id=appt["doctor"].id, start_time=start_time, end_time=end_time)
 
-    print('\t', appointment)
     db.session.add(appointment)
     db.session.commit()
+
+    print('\t', appointment)
+
 
 def seed_appointments():
     print('Seeding Appointments...')
@@ -66,6 +66,3 @@ def seed_appointments():
 
     print('Seeded %s appointments'  % len(appointments))
     print('\n')
-
-# if __name__ == "__main__":
-#   seed_database()

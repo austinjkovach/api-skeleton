@@ -2,6 +2,9 @@ from flask import Blueprint, request, jsonify
 from http import HTTPStatus
 from src.extensions import db
 from src.models import DummyModel, DoctorModel, AppointmentModel
+from src.helpers import is_within_working_hours, has_conflict, get_first_available_appointment
+from src.constants import MAX_APPOINTMENT_DURATION_MINUTES
+
 from webargs import fields
 from webargs.flaskparser import use_args
 
@@ -37,60 +40,19 @@ def dummy_model_create(args):
     db.session.commit()
     return new_record.json()
 
-# Helper functions
-def is_within_working_hours(doctor, start_time, end_time):
-    start_hour = start_time.hour
-    end_hour = end_time.hour
-    day_of_week = start_time.weekday()  # Monday is 0, Sunday is 6
-
-    # Check if within working hours (M-F)
-    return (
-        day_of_week >= 0 and day_of_week <= 4 and
-        start_hour >= doctor.start_hour and end_hour <= doctor.end_hour
-    )
-
-def has_conflict(doctor, start_time, end_time):
-    return any(
-        appt.doctor == doctor.name and (
-            (start_time >= appt.start_time and start_time < appt.end_time) or
-            (end_time > appt.start_time and end_time <= appt.end_time) or
-            (start_time <= appt.start_time and end_time >= appt.end_time)
-        )
-        for appt in doctor.appointments
-    )
-
-def get_first_available_appointment(doctor, after_time):
-    current_time = after_time.replace(minute=0, second=0, microsecond=0)
-
-    for day in range(7):
-        current_time = current_time + timedelta(days=1)
-        if current_time.weekday() >= 5:  # Skip weekends
-            continue
-
-        for hour in range(doctor.start_hour, doctor.end_hour):
-            potential_start = current_time.replace(hour=hour, minute=0)
-            potential_end = potential_start + timedelta(minutes=60)
-
-            if not has_conflict(doctor, potential_start, potential_end) and is_within_working_hours(doctor, potential_start, potential_end):
-                return potential_start
-
-    return None
-
 @home.route('/appointments', methods=['POST'])
-@use_args({'doctorName': fields.String(), 'startTime': fields.String(), 'durationMinutes': fields.Integer()})
+@use_args({'doctor_id': fields.String(), 'start_time': fields.String(), 'end_time': fields.String()})
 def create_appointment(args):
     data = request.json
-    doctor_name = args.get("doctorName")
-    start_time = datetime.fromisoformat(args.get("startTime"))
+    doctor_id = args.get("doctor_id")
+    start_time = datetime.fromisoformat(args.get("start_time"))
+    end_time = datetime.fromisoformat(args.get("end_time"))
     duration_minutes = args.get("durationMinutes")
 
     # Validate doctor
-    doctor = DoctorModel.query.filter_by(name=doctor_name).first()
+    doctor = DoctorModel.query.filter_by(id=doctor_id).first()
     if not doctor:
-        return jsonify({"error": "Invalid doctor name"}), 400
-
-    # Calculate end time
-    end_time = start_time + timedelta(minutes=duration_minutes)
+        return jsonify({"error": "Invalid doctor id"}), 400
 
     # Check working hours and conflicts
     if not is_within_working_hours(doctor, start_time, end_time):
@@ -99,24 +61,20 @@ def create_appointment(args):
         return jsonify({"error": "Appointment conflicts with an existing one"}), 409
 
     # Create and store appointment
-    appointment = AppointmentModel(doctor_id=doctor.id, start_time=start_time, end_time=end_time)
+    appointment = AppointmentModel(doctor_id=doctor_id, start_time=start_time, end_time=end_time)
     db.session.add(appointment)
     db.session.commit()
 
-    return jsonify({
-        "doctor": doctor_name,
-        "startTime": start_time.isoformat(),
-        "endTime": end_time.isoformat()
-    }), 201
+    return appointment.json(), 201
 
 
 @home.route('/appointments', methods=['GET'])
 def get_appointments():
-    doctor_name = request.args.get("doctorName")
-    start_time = datetime.fromisoformat(request.args.get("startTime"))
-    end_time = datetime.fromisoformat(request.args.get("endTime"))
+    doctor_id = request.args.get("doctor_id")
+    start_time = datetime.fromisoformat(request.args.get("start_time"))
+    end_time = datetime.fromisoformat(request.args.get("end_time"))
 
-    doctor = DoctorModel.query.filter_by(name=doctor_name).first()
+    doctor = DoctorModel.query.filter_by(id=doctor_id).first()
     if not doctor:
         return jsonify({"error": "Invalid doctor name"}), 400
 
@@ -127,32 +85,32 @@ def get_appointments():
         AppointmentModel.end_time <= end_time
     ).all()
 
+    return jsonify([appt.json() for appt in doctor_appointments])
 
-    return jsonify([
-        {
-            "doctor_name": appt.doctor.name,
-            "startTime": appt.start_time.isoformat(),
-            "endTime": appt.end_time.isoformat()
-        }
-        for appt in doctor_appointments
-    ])
-
-
-# TODO: handle improperly formatted arguments (afterTime)
 @home.route('/appointments/first-available', methods=['GET'])
 def get_first_available():
-    doctor_name = request.args.get("doctorName")
-    after_time = datetime.fromisoformat(request.args.get("afterTime"))
+    doctor_id = request.args.get("doctor_id")
+    after_time = datetime.fromisoformat(request.args.get("after"))
+    duration_minutes = int(request.args.get("duration_minutes"))
 
-    doctor = DoctorModel.query.filter_by(name=doctor_name).first()
+    if duration_minutes > MAX_APPOINTMENT_DURATION_MINUTES:
+        return jsonify({"error": "Cannot book appointment longer than 2 hours"}), 400
+
+    doctor = DoctorModel.query.filter_by(id=doctor_id).first()
     if not doctor:
-        return jsonify({"error": "Invalid doctor name"}), 400
+        return jsonify({"error": "Invalid doctor id"}), 400
 
-    first_available = get_first_available_appointment(doctor, after_time)
+    first_available = get_first_available_appointment(doctor, after_time, duration_minutes)
     if first_available:
+        # return jsonify({"": "Appointment conflicts with an existing one"})
+
         return jsonify({
-            "doctor": doctor_name,
-            "startTime": first_available.isoformat()
+          'start_time': first_available.start_time.isoformat(),
+          'end_time': first_available.end_time.isoformat(),
+          'doctor': {
+            'id': doctor.id,
+            'name': doctor.name
+          }
         })
     else:
         return jsonify({"error": "No available appointments"}), 404
