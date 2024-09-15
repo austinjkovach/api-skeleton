@@ -119,16 +119,17 @@ def get_appointments():
     if not doctor:
         return jsonify({"error": "Invalid doctor name"}), 400
 
-    # Filter appointments
-    doctor_appointments = [
-        appt for appt in appointments
-        if appt.doctor == doctor_name and
-        appt.start_time >= start_time and appt.end_time <= end_time
-    ]
+    # Query appointments for the specified doctor within the given time range
+    doctor_appointments = AppointmentModel.query.filter(
+        AppointmentModel.doctor_id == doctor.id,
+        AppointmentModel.start_time >= start_time,
+        AppointmentModel.end_time <= end_time
+    ).all()
+
 
     return jsonify([
         {
-            "doctor": appt.doctor,
+            "doctor_name": appt.doctor.name,
             "startTime": appt.start_time.isoformat(),
             "endTime": appt.end_time.isoformat()
         }
