@@ -1,7 +1,8 @@
 # from src.extensions import db
 from datetime import datetime, timedelta
 from src.helpers import format_12hr
-from src.models import DoctorModel, AppointmentModel
+from src.models.doctor import DoctorModel
+from src.models.appointment import AppointmentModel
 from src.extensions import db
 
 def seed_database(app):

@@ -1,6 +1,6 @@
 from flask import Flask, jsonify
 from src.extensions import db
-from src.endpoints import home
+from src.endpoints import appointments_bp
 from src.seeds import seed_database
 
 
@@ -14,5 +14,6 @@ def create_app():
     with app.app_context():
         db.create_all()
         seed_database(app)
-    app.register_blueprint(home)
+
+    app.register_blueprint(appointments_bp)
     return app

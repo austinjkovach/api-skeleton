@@ -1,7 +1,8 @@
 from flask import Blueprint, request, jsonify
 from http import HTTPStatus
 from src.extensions import db
-from src.models import DummyModel, DoctorModel, AppointmentModel
+from src.models.doctor import DoctorModel
+from src.models.appointment import AppointmentModel
 from src.helpers import is_within_working_hours, has_conflict, get_next_available_appointment
 from src.constants import MAX_APPOINTMENT_DURATION_MINUTES
 
@@ -10,7 +11,7 @@ from webargs.flaskparser import use_args
 
 from datetime import datetime, timedelta
 
-home = Blueprint('/', __name__)
+appointments_bp = Blueprint('/appointments', __name__)
 
 
 # Helpful documentation:
@@ -18,29 +19,7 @@ home = Blueprint('/', __name__)
 # https://flask.palletsprojects.com/en/2.0.x/quickstart/#variable-rules
 
 
-@home.route('/')
-def index():
-    return {'data': 'OK'}
-
-
-@home.route('/dummy_model/<id_>', methods=['GET'])
-def dummy_model(id_):
-    record = DummyModel.query.filter_by(id=id_).first()
-    if record is not None:
-        return record.json()
-    else:
-        return jsonify(None), HTTPStatus.NOT_FOUND
-
-
-@home.route('/dummy_model', methods=['POST'])
-@use_args({'value': fields.String()})
-def dummy_model_create(args):
-    new_record = DummyModel(value=args.get('value'))
-    db.session.add(new_record)
-    db.session.commit()
-    return new_record.json()
-
-@home.route('/appointments', methods=['POST'])
+@appointments_bp.route('/appointments', methods=['POST'])
 @use_args({'doctor_id': fields.String(), 'start_time': fields.String(), 'end_time': fields.String()})
 def create_appointment(args):
     data = request.json
@@ -68,7 +47,7 @@ def create_appointment(args):
     return appointment.json(), 201
 
 
-@home.route('/appointments', methods=['GET'])
+@appointments_bp.route('/appointments', methods=['GET'])
 def get_appointments():
     doctor_id = request.args.get("doctor_id")
     start_time = datetime.fromisoformat(request.args.get("start_time"))
@@ -85,10 +64,17 @@ def get_appointments():
         AppointmentModel.end_time <= end_time
     ).order_by(AppointmentModel.start_time).all()
 
+    return jsonify([{
+        'id': appt.id,
+        'start_time': appt.start_time,
+        'end_time': appt.end_time,
+        'doctor': {
+          'id': appt.doctor.id,
+          'name': appt.doctor.name
+        }
+    } for appt in doctor_appointments])
 
-    return jsonify([appt.json() for appt in doctor_appointments])
-
-@home.route('/appointments/next-available', methods=['GET'])
+@appointments_bp.route('/appointments/next-available', methods=['GET'])
 def get_next_available():
     doctor_id = request.args.get("doctor_id")
     after_time = datetime.fromisoformat(request.args.get("after"))

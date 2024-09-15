@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from src.models import AppointmentModel
+from src.models.appointment import AppointmentModel
 from src.constants import MAX_APPOINTMENT_DURATION_MINUTES
 
 def format_12hr(hour):
