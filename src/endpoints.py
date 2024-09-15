@@ -89,8 +89,6 @@ def get_next_available():
 
     next_available = get_next_available_appointment(doctor, after_time, duration_minutes)
     if next_available:
-        # return jsonify({"": "Appointment conflicts with an existing one"})
-
         return jsonify({
           'start_time': next_available.start_time.isoformat(),
           'end_time': next_available.end_time.isoformat(),

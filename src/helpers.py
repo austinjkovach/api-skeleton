@@ -45,10 +45,11 @@ def get_next_available_appointment(doctor, after_time, duration_minutes):
     while i < len(appointments):
       appointment = appointments[i]
 
-      # Skip past any appointments that ended before our potential start
+      # Skip past any appointments that ended before our potential_start
       if potential_start >= appointment.end_time:
         while potential_start >= appointment.end_time:
           i += 1
+          appointment = appointments[i]
         continue
 
       # Skip weekends
@@ -66,7 +67,7 @@ def get_next_available_appointment(doctor, after_time, duration_minutes):
           potential_end = potential_start + duration_delta
           continue
 
-      # If next appointment start time is after our end time
+      # If next appointment start_time is after our end_time
       # (aka does not conflict), we can return the potential appointment.
       # Otherwise, the earliest we could schedule is the end of the next appointment
       if appointment.start_time >= potential_end:
@@ -77,9 +78,7 @@ def get_next_available_appointment(doctor, after_time, duration_minutes):
         i += 1
 
 
-    # If we made it here, all intervals were conflicts.
-    # Check if end_times are valid
-
+    # If we made it here, all intervals were conflicts - just get the next valid working hour
     # Skip weekends
     while potential_start.weekday() >= 5:
         potential_start = potential_start + timedelta(days=1)
